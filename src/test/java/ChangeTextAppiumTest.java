@@ -1,18 +1,18 @@
-import io.appium.java_client.MobileElement;
 import io.appium.java_client.android.AndroidDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
-public class ChangeTextAppiumTest {
-
+class ChangeTextAppiumTest {
     private AndroidDriver driver;
+    private MainActivityPage mainPage;
+    private SecondActivityPage secondPage;
     private static final String TEXT_TO_SET = "Netology";
 
     private URL getUrl() {
@@ -36,56 +36,38 @@ public class ChangeTextAppiumTest {
         desiredCapabilities.setCapability("appium:nativeWebScreenshot", true);
         desiredCapabilities.setCapability("appium:newCommandTimeout", 3600);
         desiredCapabilities.setCapability("appium:connectHardwareKeyboard", true);
-        desiredCapabilities.setCapability("appium:uiautomator2ServerLaunchTimeout", 90000);
-        desiredCapabilities.setCapability("appium:adbExecTimeout", 90000);
+        desiredCapabilities.setCapability("appium:uiautomator2ServerLaunchTimeout", 120000);
+        desiredCapabilities.setCapability("appium:adbExecTimeout", 120000);
 
         driver = new AndroidDriver(getUrl(), desiredCapabilities);
+        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
+
+        mainPage = new MainActivityPage(driver);
+        secondPage = new SecondActivityPage(driver);
     }
 
     @Test
     public void testChangeText() {
-        MobileElement userInput = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/userInput"));
-        userInput.clear();
-        userInput.sendKeys(TEXT_TO_SET);
-
-        MobileElement buttonChange = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/buttonChange"));
-        buttonChange.click();
-
-        MobileElement textToBeChanged = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/textToBeChanged"));
-        Assertions.assertEquals(TEXT_TO_SET, textToBeChanged.getText());
+        mainPage.setUserInput(TEXT_TO_SET);
+        mainPage.clickChangeButton();
+        Assertions.assertEquals(TEXT_TO_SET, mainPage.getTextToBeChanged());
     }
 
     @Test
     public void testEmptyStringInput() {
-        MobileElement textToBeChanged = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/textToBeChanged"));
-        String originalText = textToBeChanged.getText();
-
-        MobileElement userInput = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/userInput"));
-        userInput.clear();
-        userInput.sendKeys("   ");
-
-        MobileElement buttonChange = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/buttonChange"));
-        buttonChange.click();
-
-        String updatedText = textToBeChanged.getText();
+        String originalText = mainPage.getTextToBeChanged();
+        mainPage.setUserInput("   ");
+        mainPage.clickChangeButton();
+        String updatedText = mainPage.getTextToBeChanged();
         Assertions.assertEquals(originalText, updatedText);
     }
 
     @Test
     public void testTextInNewActivity() {
         String textToSet = "Non-empty text";
-
-        MobileElement userInput = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/userInput"));
-        userInput.clear();
-        userInput.sendKeys(textToSet);
-
-        MobileElement buttonActivity = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/buttonActivity"));
-        buttonActivity.click();
-
-        driver.manage().timeouts().implicitlyWait(15, java.util.concurrent.TimeUnit.SECONDS);
-
-        MobileElement resultText = (MobileElement) driver.findElement(By.id("ru.netology.testing.uiautomator:id/text"));
-        Assertions.assertEquals(textToSet, resultText.getText());
+        mainPage.setUserInput(textToSet);
+        mainPage.clickActivityButton();
+        Assertions.assertEquals(textToSet, secondPage.getResultText());
     }
 
     @AfterEach
